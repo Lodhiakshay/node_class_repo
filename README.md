@@ -18,4 +18,5 @@ This is a simple REST API built with Node.js and MongoDB.
 1. Clone the repository:
    ```bash
    git clone https://github.com/Lodhiakshay/node_class_repo.git
-   cd your-repo-name
+   cd node_class_repo
+   npm i

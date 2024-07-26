@@ -43,11 +43,15 @@ const register = async(req, res) => {
 const updateProfile = async(req, res) => {
     try {
 
-        const { id } = req.params
-        let { firstName, lastName, mobile } = req.body
+        // const { id } = req.params
+        const id = req.params.id
 
+        let { firstName, lastName, mobile, email } = req.body
+
+        // check if user exist
         const existUser = await User.findById(id)
 
+        // if user not exist
         if (!existUser) {
             return res.status(400).json({
                 status: false,
@@ -58,11 +62,24 @@ const updateProfile = async(req, res) => {
         const payload = {
             firstName,
             lastName,
+            email,
             mobile
         }
 
-        await User.findByIdAndUpdate(id, payload, { neqw: true })
+        // update the give fields and return new user data
+        const updatedUser = await User.findByIdAndUpdate(id, payload, { new: true })
 
+        if (!updatedUser) {
+            return res.status(400).json({
+                status: false,
+                message: "User not updated, Bad request"
+            })
+        }
+        return res.status(200).json({
+            status: true,
+            message: "User updated successfully",
+            data: updatedUser
+        })
 
     } catch (error) {
         return res.status(500).json({
@@ -73,5 +90,48 @@ const updateProfile = async(req, res) => {
     }
 }
 
+const getUser = async(req, res) => {
+    try {
 
-module.exports = { register }
+        const { id } = req.query
+
+        if (id) {
+            const user = await User.findById(id)
+
+            if (!user) {
+                return res.status(404).json({
+                    status: false,
+                    message: "Data not found with this id"
+                })
+            }
+            return res.status(200).json({
+                status: true,
+                message: "User found successfully",
+                data: user
+            })
+        }
+
+        const users = await User.find() //returns array of all users
+
+        if (!users) {
+            return res.status(404).json({
+                status: false,
+                message: "Data not found"
+            })
+        }
+        return res.status(200).json({
+            status: true,
+            message: "User found successfully",
+            data: users
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            status: false,
+            message: "Internal server error",
+            error: error.message
+        })
+    }
+}
+
+module.exports = { register, updateProfile, getUser }
