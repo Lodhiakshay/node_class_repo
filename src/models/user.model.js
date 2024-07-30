@@ -16,6 +16,14 @@ const userSchema = new mongoose.Schema({
         unique: [true, "Email should be unique"],
         trim: true
     },
+    otp: {
+        type: Number,
+        default: 123456
+    },
+    isRegisterd: {
+        type: Boolean,
+        default: false
+    },
     mobile: {
         type: String,
         trim: true

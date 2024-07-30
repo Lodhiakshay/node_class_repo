@@ -3,5 +3,5 @@ PORT = 3000
 MONGODB_URI = mongodb://localhost:27017/class_db
 
 # NODE MAILER Credentials
-EMAIL_USERNAME = khansharukhappic12@gmail.com
-EMAIL_PASSWORD = gnposdbhgbfxflgu
+EMAIL_USERNAME = your_email@gmail.com
+EMAIL_PASSWORD = your_password

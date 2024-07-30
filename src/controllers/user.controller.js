@@ -1,5 +1,7 @@
 const User = require("../models/user.model")
+const { sendOtpByEmail, generateOTP } = require("../utils/sendEmail")
 const bcrypt = require('bcryptjs');
+const jwt = require("jsonwebtoken")
 
 const register = async(req, res) => {
 
@@ -11,12 +13,17 @@ const register = async(req, res) => {
 
         const hasPassword = await bcrypt.hash(password, 10)
 
+
+        // generate 6 digit otp
+        const otp = generateOTP()
+
         // insert data or entry in database
         const userData = await User.create({
                 firstName,
                 lastName,
                 email,
                 mobile,
+                otp,
                 password: hasPassword
             })
             // send response
@@ -26,10 +33,48 @@ const register = async(req, res) => {
                 message: "User not created"
             })
         }
+
+        // Send otp on email
+        sendOtpByEmail(email, otp)
+
         return res.status(201).json({
             status: true,
             message: "User created successfully",
             data: userData
+        })
+    } catch (error) {
+        return res.status(500).json({
+            status: false,
+            message: "Internal server error",
+            error: error.message
+        })
+    }
+}
+
+const verifyOtp = async(req, res) => {
+    try {
+        const { email, otp } = req.body
+
+        const existUser = await User.findOne({ email })
+
+        if (existUser) {
+            if (existUser.otp === otp) {
+                existUser.isRegisterd = true
+                await existUser.save()
+
+                return res.status(200).json({
+                    status: true,
+                    message: "Otp verified successfully",
+                })
+            }
+            return res.status(400).json({
+                status: false,
+                message: "Wrong OTP",
+            })
+        }
+        return res.status(400).json({
+            status: false,
+            message: "User does not exist",
         })
     } catch (error) {
         return res.status(500).json({
@@ -134,4 +179,60 @@ const getUser = async(req, res) => {
     }
 }
 
-module.exports = { register, updateProfile, getUser }
+const login = async(req, res) => {
+    try {
+        const { email, password } = req.body
+
+        // check exist User with given email
+        const existUser = await User.findOne({
+            email
+        })
+
+        if (!existUser) {
+            return res.status(400).json({
+                status: false,
+                message: "User not registerd"
+            })
+        } else if (!existUser.isRegisterd) {
+            return res.status(400).json({
+                status: false,
+                message: "Please verify your OTP and complete your signup"
+            })
+        }
+
+        // math the password
+        const isPasswordMatch = await bcrypt.compare(password, existUser.password)
+
+        if (!isPasswordMatch) {
+            return res.status(400).json({
+                status: false,
+                message: "Please enter correct password"
+            })
+        }
+
+        const payload = {
+            _id: existUser._id,
+            email: existUser.email,
+        }
+
+        // generate token
+        const jwtToken = jwt.sign(payload, "hgjhdyxtiuy8e7tiuwqguer2yte912")
+
+        return res.status(200).json({
+            status: true,
+            message: "Logged in successfully",
+            data: existUser,
+            token: jwtToken
+        })
+
+
+    } catch (error) {
+        return res.status(500).json({
+            status: false,
+            message: "Internal server error",
+            error: error.message
+        })
+    }
+}
+
+module.exports = { register, updateProfile, getUser, verifyOtp, login }
