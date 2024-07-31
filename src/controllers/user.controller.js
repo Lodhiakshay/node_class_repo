@@ -235,4 +235,39 @@ const login = async(req, res) => {
     }
 }
 
-module.exports = { register, updateProfile, getUser, verifyOtp, login }
+const deleteUser = async(req, res) => {
+    try {
+        const { _id } = req.params
+
+        if (!_id) {
+            return res.status(400).json({
+                status: false,
+                message: "Id is required"
+            })
+        }
+
+        const deletedUser = await User.findByIdAndDelete(_id)
+
+        if (!deletedUser) {
+            return res.status(400).json({
+                status: false,
+                message: "User not found with this id"
+            })
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "User deleted successfully",
+            data: deleteUser
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            status: false,
+            message: "Internal server error",
+            error: error.message
+        })
+    }
+}
+
+module.exports = { register, updateProfile, getUser, verifyOtp, login, deleteUser }
